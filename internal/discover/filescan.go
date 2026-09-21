@@ -36,7 +36,10 @@ func Find() ([]string, error) {
 	}
 
 	homePath, err := homeSettingsPath()
-	if err == nil && fileExists(homePath) {
+	if err != nil {
+		return result, err
+	}
+	if fileExists(homePath) {
 		result = append(result, homePath)
 	}
 
