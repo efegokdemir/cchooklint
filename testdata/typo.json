@@ -1,0 +1,12 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bahs",
+        "hooks": [
+          { "type": "command", "command": "echo hi" }
+        ]
+      }
+    ]
+  }
+}
