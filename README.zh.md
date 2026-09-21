@@ -49,6 +49,9 @@ $ cchooklint --lang=zh
 [WARN] 此 hook 仅覆盖 "Bash"，当使用另一个工具时不会触发。建议改为 "Bash|PowerShell"。
 ```
 
+如需机器可读的输出，请使用`--format=json`。JSON包含带版本的包装对象、
+稳定的规则代码以及消息的原始参数。JSON输出不会受`--lang`影响。
+
 ### 显示语言
 
 输出语言按以下优先级决定：

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/su-fu/cchooklint/internal/discover"
@@ -16,20 +18,23 @@ func main() {
 }
 
 func run() int {
+	format := flag.String("format", "text", "Output format: text or json")
 	lang := flag.String("lang", "", "Language")
 	flag.Parse()
-
-	var resolvedLang string
-	if *lang != "" {
-		resolvedLang = *lang
-	} else {
-		envLang := os.Getenv("CCHOOKLINT_LANG")
-		if envLang != "" {
-			resolvedLang = envLang
-		} else {
-			resolvedLang = "en"
-		}
+	if *format != "text" && *format != "json" {
+		fmt.Fprintf(os.Stderr, "unsupported output format %q (want text or json)\n", *format)
+		return 2
 	}
+
+	resolvedLang := *lang
+	if resolvedLang == "" {
+		resolvedLang = os.Getenv("CCHOOKLINT_LANG")
+	}
+	if resolvedLang == "" {
+		resolvedLang = "en"
+	}
+
+	jsonFindings := make([]jsonFinding, 0)
 	paths, err := discover.Find()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, i18n.T(resolvedLang, i18n.MsgDiscoverError, err))
@@ -51,12 +56,43 @@ func run() int {
 			findings := rule.Check(entries)
 			findingsFound = findingsFound || len(findings) > 0
 			for _, finding := range findings {
-				fmt.Println(i18n.T(resolvedLang, finding.MessageID, finding.Args...))
+				if *format == "json" {
+					jsonFindings = append(jsonFindings, jsonFinding{
+						SourceFile: finding.SourceFile,
+						Event:      finding.Event,
+						Severity:   finding.Severity,
+						Code:       finding.Code,
+						Args:       finding.Args,
+					})
+				} else {
+					fmt.Println(i18n.T(resolvedLang, finding.MessageID, finding.Args...))
+				}
 			}
+		}
+	}
+	if *format == "json" {
+		if err := writeJSONFindings(os.Stdout, jsonFindings); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 2
 		}
 	}
 	if findingsFound && exitCode == 0 {
 		return 1
 	}
 	return exitCode
+}
+
+type jsonFinding struct {
+	SourceFile string `json:"source_file"`
+	Event      string `json:"event"`
+	Severity   string `json:"severity"`
+	Code       string `json:"code"`
+	Args       []any  `json:"args"`
+}
+
+func writeJSONFindings(writer io.Writer, findings []jsonFinding) error {
+	return json.NewEncoder(writer).Encode(struct {
+		Version  int           `json:"version"`
+		Findings []jsonFinding `json:"findings"`
+	}{Version: 1, Findings: findings})
 }

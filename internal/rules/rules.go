@@ -13,11 +13,17 @@ type Rule interface {
 
 type Finding struct {
 	Severity   string // "warn" | "info"
+	Code       string // stable machine-readable rule identifier
 	SourceFile string
 	Event      string
 	MessageID  i18n.MessageID
 	Args       []any // i18nメッセージのフォーマット引数
 }
+
+const (
+	CodeMatcherTypo = "matcher_typo"
+	CodeCoverageGap = "coverage_gap"
+)
 
 type TypoRule struct{}
 
@@ -37,12 +43,12 @@ func (r TypoRule) Check(entries []model.HookEntry) []Finding {
 			distPS := model.EditDistance(token, "PowerShell")
 			if distBash <= distPS {
 				if distBash <= 2 {
-					result = append(result, Finding{Severity: "WARN", SourceFile: entry.SourceFile, Event: entry.Event, MessageID: i18n.MsgTypoWarning, Args: []any{token, "Bash"}})
+					result = append(result, Finding{Severity: "WARN", Code: CodeMatcherTypo, SourceFile: entry.SourceFile, Event: entry.Event, MessageID: i18n.MsgTypoWarning, Args: []any{token, "Bash"}})
 				}
 
 			} else {
 				if distPS <= 2 {
-					result = append(result, Finding{Severity: "WARN", SourceFile: entry.SourceFile, Event: entry.Event, MessageID: i18n.MsgTypoWarning, Args: []any{token, "PowerShell"}})
+					result = append(result, Finding{Severity: "WARN", Code: CodeMatcherTypo, SourceFile: entry.SourceFile, Event: entry.Event, MessageID: i18n.MsgTypoWarning, Args: []any{token, "PowerShell"}})
 				}
 			}
 		}
@@ -94,7 +100,7 @@ func (r CoverageRule) Check(entries []model.HookEntry) []Finding {
 		if !containsDangerKeyword(entry.Command) {
 			continue
 		}
-		result = append(result, Finding{Severity: "WARN", SourceFile: entry.SourceFile, Event: entry.Event, MessageID: i18n.MsgCoverageWarning, Args: []any{entry.Matcher, "Bash|PowerShell"}})
+		result = append(result, Finding{Severity: "WARN", Code: CodeCoverageGap, SourceFile: entry.SourceFile, Event: entry.Event, MessageID: i18n.MsgCoverageWarning, Args: []any{entry.Matcher, "Bash|PowerShell"}})
 	}
 	return result
 }

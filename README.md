@@ -49,6 +49,15 @@ $ cchooklint
 [WARN] This hook only covers "Bash". It won't fire when the other tool is used. Consider changing it to "Bash|PowerShell".
 ```
 
+For machine-readable output, use `--format=json`:
+
+```json
+{"version":1,"findings":[{"source_file":".claude/settings.json","event":"PreToolUse","severity":"WARN","code":"matcher_typo","args":["Bahs","Bash"]}]}
+```
+
+The JSON envelope is versioned and includes stable rule codes plus the raw
+message arguments. `--lang` does not change JSON output.
+
 ### Language
 
 Output language is selected in this order:
