@@ -59,6 +59,12 @@ Output language is selected in this order:
 
 Supported: `en`, `ja`, `zh`. Unsupported values fall back to `en`.
 
+### Exit codes
+
+- `0` — no findings and no tool errors
+- `1` — one or more hook findings were reported
+- `2` — a settings discovery or loading error occurred
+
 ## License
 
 [MIT](LICENSE)
